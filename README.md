@@ -1,7 +1,13 @@
 # jeopardy_game
-Test repo for a small backend for playing jeopardy like game
 
-# Repo structure
+Small FastAPI + PostgreSQL + SQLAlchemy API for a Jeopardy-like game.
+
+Features:
+- `GET /question/?round=Jeopardy!&value=$200` returns a random question
+- `POST /verify-answer/` verifies a user answer (heuristic + optional OpenAI LLM)
+
+
+## Repo structure
 ```
 jeopardy_game/
   src/
@@ -43,94 +49,141 @@ jeopardy_game/
   README.md
 ```
 
-# Local setup - Jeopardy Game API
+## Prerequisites
 
-Small FastAPI + PostgreSQL + SQLAlchemy API that:
-- Returns a random Jeopardy question filtered by `round` and `value`
-- Verifies a user’s answer against the stored correct answer (tolerant to minor typos)
-
-## Requirements
 - Python 3.13+
-- PostgreSQL 16+ (local or Docker)
-- `pip`
-- make (optional)
-- Docker & docker-compose
+- Docker + Docker Compose (recommended)
+- `make` (optional)
+- Dataset CSV at `assets/JEOPARDY_CSV.csv` (included in the repo for simplicity)
 
-## Environment variables
-The API expects a database URL via `DATABASE_URL`.
+## Environment
 
-Example:
+Create a local `.env` file from the example and add your OpenAI key if you want LLM verification.
+
 ```bash
-export DATABASE_URL="postgresql+psycopg://postgres:postgres@localhost:5432/jeopardy"
+cp .env.example .env
+# Edit .env and set OPENAI_API_KEY if you want LLM verification
+````
+
+Notes:
+
+* `.env` must not be committed.
+* If `OPENAI_API_KEY` is not set, the API will fall back to heuristic verification.
+
+
+# 1) Run with Make (recommended)
+
+From repo root:
+
+```bash
+cp .env.example .env
+make up
 ```
 
-## Initial Setup (without Makefile and make)
+Swagger UI:
+
+* [http://localhost:8000/docs](http://localhost:8000/docs)
+
+Run smoke requests (starts stack detached, waits for API, runs curl checks):
 
 ```bash
-# 1) Create venv folder if needed
+make smoke-up
+```
+
+Cleanup:
+
+```bash
+make smoke-clean
+```
+
+# 2) Run with Docker Compose (no Make)
+
+From repo root:
+
+```bash
+cp .env.example .env
+docker compose up --build
+```
+
+Swagger UI:
+
+* [http://localhost:8000/docs](http://localhost:8000/docs)
+
+To stop:
+
+```bash
+docker compose down
+```
+
+To wipe the DB volume (fresh load next time):
+
+```bash
+docker compose down -v
+```
+
+How it works:
+
+* `postgres` starts
+* `loader` initializes schema and loads `assets/JEOPARDY_CSV.csv` (value <= 1200), then exits
+* `api` starts after `loader` completes successfully
+
+# 3) Pure local (no Docker)
+
+This runs the API in a venv on your host and assumes you have a reachable Postgres instance.
+
+## 3.1 Create and install venv
+
+```bash
 mkdir -p ~/venvs
-
-# 2) Create venv
-python3 -m venv ~/venvs/jeopardy_game
-
-# 3) Activate venv
+python3.13 -m venv ~/venvs/jeopardy_game
 source ~/venvs/jeopardy_game/bin/activate
 
-# 4) Upgrade pip tooling
 python -m pip install --upgrade pip setuptools wheel
-
-# 5) Install dependencies
-pip install -r requirements.txt
+pip install -r src/jeopardy_game/requirements.txt
 ```
 
-## Run PostgreSQL (example)
+## 3.2 Start Postgres (choose one)
 
-Create a local database named jeopardy and ensure your DATABASE_URL points to it.
+### Option A: Local Postgres (already installed)
 
-Example using psql:
+Create DB/user as you prefer and set `DATABASE_URL`.
 
-```bash
-createdb jeopardy
-```
-
-Or with a dockerized PostgreSQL (example):
+### Option B: Postgres via Docker (only DB in Docker)
 
 ```bash
 docker run --rm -d \
   --name jeopardy-postgres \
-  -e POSTGRES_PASSWORD=postgres \
+  -e POSTGRES_USER=jeopardy \
+  -e POSTGRES_PASSWORD=jeopardy \
   -e POSTGRES_DB=jeopardy \
   -p 5432:5432 \
   postgres:16
 ```
 
-Then:
-```
-export DATABASE_URL="postgresql+psycopg://postgres:postgres@localhost:5432/jeopardy"
-```
+## 3.3 Load dataset
 
+Ensure the dataset exists at `assets/JEOPARDY_CSV.csv`, then:
 
-# Makefile Usage from repo root
-
-Local venv install:
-
-```bash
-make install
-```
-
-Run API locally (Postgres must be reachable and DATABASE_URL set):
 ```bash
 export DATABASE_URL="postgresql+psycopg://jeopardy:jeopardy@localhost:5432/jeopardy"
-make run
+export JEP_CSV_PATH="assets/JEOPARDY_CSV.csv"
+export JEP_MAX_VALUE="1200"
+
+PYTHONPATH="$PWD/src" python scripts/load_dataset.py
 ```
 
-Run full Docker stack:
+## 3.4 Run API locally
+
 ```bash
-make up
+export DATABASE_URL="postgresql+psycopg://jeopardy:jeopardy@localhost:5432/jeopardy"
+export OPENAI_API_KEY="..."         # optional
+export OPENAI_MODEL="gpt-4o-mini"   # optional
+
+PYTHONPATH="$PWD/src" uvicorn jeopardy_game.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-Wipe DB volume and start fresh:
-```bash
-make reset
-make up
-```
+Swagger UI:
+
+* [http://localhost:8000/docs](http://localhost:8000/docs)
+
+
