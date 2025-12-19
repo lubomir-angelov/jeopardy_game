@@ -23,7 +23,7 @@ services:
     container_name: jeopardy-loader
     environment:
       DATABASE_URL: postgresql+psycopg://jeopardy:jeopardy@postgres:5432/jeopardy
-      JEP_CSV_PATH: /assets/jeopardy.csv
+      JEP_CSV_PATH: /assets/JEOPARDY_CSV.csv
       JEP_MAX_VALUE: "1200"
     depends_on:
       postgres:

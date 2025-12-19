@@ -1,14 +1,12 @@
-"""Script to load Jeopardy questions from a CSV into the database. Also inits the DB schema if needed."""
 # repo_root/scripts/load_dataset.py
 from __future__ import annotations
 
-import csv
 import os
 import re
 import time
-from datetime import datetime
 from typing import Optional
 
+import pandas as pd
 from sqlalchemy import create_engine, text
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import sessionmaker
@@ -20,11 +18,14 @@ from jeopardy_game.models.question import Question
 _VALUE_RE = re.compile(r"^\s*\$?\s*(\d+)\s*$")
 
 
-def parse_value(value_raw: str) -> Optional[int]:
+def parse_value(value_raw: object) -> Optional[int]:
     """Parse '$200' / '200' into int(200). Return None if unparseable."""
-    if not value_raw:
+    if value_raw is None:
         return None
-    m = _VALUE_RE.match(value_raw)
+    s = str(value_raw).strip()
+    if not s:
+        return None
+    m = _VALUE_RE.match(s)
     if not m:
         return None
     return int(m.group(1))
@@ -60,59 +61,69 @@ def main() -> None:
     # Create schema (idempotent)
     Base.metadata.create_all(bind=engine)
 
-    # If already seeded, skip.
+    # If already seeded, skip
     with SessionLocal() as db:
         if db.query(Question.id).limit(1).first() is not None:
             print("Questions already exist; skipping load.")
             return
 
+    # Read CSV robustly (handles BOM via utf-8-sig)
+    df = pd.read_csv(csv_path, encoding="utf-8-sig")
+    df.columns = [c.strip() for c in df.columns]
+
+    required_cols = [
+        "Show Number",
+        "Air Date",
+        "Round",
+        "Category",
+        "Value",
+        "Question",
+        "Answer",
+    ]
+    missing = [c for c in required_cols if c not in df.columns]
+    if missing:
+        raise RuntimeError(f"CSV is missing required columns: {missing}. Found: {list(df.columns)}")
+
+    # Parse and filter values
+    df["value_int"] = df["Value"].map(parse_value)
+    df = df[df["value_int"].notna()]
+    df = df[df["value_int"] <= max_value]
+
+    # Parse dates (YYYY-MM-DD)
+    df["air_date"] = pd.to_datetime(
+        df["Air Date"].astype(str).str.strip(),
+        format="%Y-%m-%d",
+        errors="coerce",
+    )
+    df = df[df["air_date"].notna()]
+
+    # Drop missing essentials
+    df = df.dropna(subset=["Show Number", "Round", "Category", "Question", "Answer", "air_date", "value_int"])
+
+    rows = df.to_dict(orient="records")
+
+    batch_size = 2000
     inserted = 0
-    commit_every = 2000
 
-    with open(csv_path, "r", encoding="utf-8", newline="") as f, SessionLocal() as db:
-        reader = csv.DictReader(f)
-
-        # Your headers (note the spaces):
-        # Show Number, Air Date, Round, Category, Value, Question, Answer
-        required_cols = {
-            "Show Number",
-            "Air Date",
-            "Round",
-            "Category",
-            "Value",
-            "Question",
-            "Answer",
-        }
-        missing = required_cols - set(reader.fieldnames or [])
-        if missing:
-            raise RuntimeError(f"CSV is missing required columns: {sorted(missing)}")
-
-        for row in reader:
-            value_int = parse_value((row.get("Value") or "").strip())
-            if value_int is None or value_int > max_value:
-                continue
-
-            air_date_raw = (row.get("Air Date") or "").strip()
-            # Dataset uses YYYY-MM-DD as shown in your sample
-            air_date = datetime.strptime(air_date_raw, "%Y-%m-%d").date()
-
-            q = Question(
-                show_number=int((row.get("Show Number") or "0").strip()),
-                air_date=air_date,
-                round=(row.get("Round") or "").strip(),
-                category=(row.get("Category") or "").strip(),
-                value=value_int,
-                question=(row.get("Question") or "").strip(),
-                answer=(row.get("Answer") or "").strip(),
-            )
-            db.add(q)
-            inserted += 1
-
-            if inserted % commit_every == 0:
-                db.commit()
-                print(f"Inserted {inserted}...")
-
-        db.commit()
+    with SessionLocal() as db:
+        for i in range(0, len(rows), batch_size):
+            batch = rows[i : i + batch_size]
+            objs = [
+                Question(
+                    show_number=int(str(r["Show Number"]).strip()),
+                    air_date=r["air_date"].date(),
+                    round=str(r["Round"]).strip(),
+                    category=str(r["Category"]).strip(),
+                    value=int(r["value_int"]),
+                    question=str(r["Question"]).strip(),
+                    answer=str(r["Answer"]).strip(),
+                )
+                for r in batch
+            ]
+            db.bulk_save_objects(objs)
+            db.commit()
+            inserted += len(objs)
+            print(f"Inserted {inserted}...")
 
     print(f"Load complete. Inserted: {inserted}")
 
