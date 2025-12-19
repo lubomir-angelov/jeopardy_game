@@ -1,0 +1,50 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: jeopardy-postgres
+    environment:
+      POSTGRES_USER: jeopardy
+      POSTGRES_PASSWORD: jeopardy
+      POSTGRES_DB: jeopardy
+    ports:
+      - "5432:5432"
+    volumes:
+      - jeopardy_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jeopardy -d jeopardy"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+
+  loader:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: jeopardy-loader
+    environment:
+      DATABASE_URL: postgresql+psycopg://jeopardy:jeopardy@postgres:5432/jeopardy
+      JEP_CSV_PATH: /assets/jeopardy.csv
+      JEP_MAX_VALUE: "1200"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./assets:/assets:ro
+    command: ["python", "scripts/load_dataset.py"]
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: jeopardy-api
+    environment:
+      DATABASE_URL: postgresql+psycopg://jeopardy:jeopardy@postgres:5432/jeopardy
+    ports:
+      - "8000:8000"
+    depends_on:
+      loader:
+        condition: service_completed_successfully
+    command: ["uvicorn", "jeopardy_game.app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+volumes:
+  jeopardy_pgdata:
