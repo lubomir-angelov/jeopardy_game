@@ -68,3 +68,48 @@ Example:
 ```bash
 export DATABASE_URL="postgresql+psycopg://postgres:postgres@localhost:5432/jeopardy"
 ```
+
+## Initial Setup
+
+```bash
+# 1) Create venv folder if needed
+mkdir -p ~/venvs
+
+# 2) Create venv
+python3 -m venv ~/venvs/jeopardy_game
+
+# 3) Activate venv
+source ~/venvs/jeopardy_game/bin/activate
+
+# 4) Upgrade pip tooling
+python -m pip install --upgrade pip setuptools wheel
+
+# 5) Install dependencies
+pip install -r requirements.txt
+```
+
+## Run PostgreSQL (example)
+
+Create a local database named jeopardy and ensure your DATABASE_URL points to it.
+
+Example using psql:
+
+```bash
+createdb jeopardy
+```
+
+Or with a dockerized PostgreSQL (example):
+
+```bash
+docker run --rm -d \
+  --name jeopardy-postgres \
+  -e POSTGRES_PASSWORD=postgres \
+  -e POSTGRES_DB=jeopardy \
+  -p 5432:5432 \
+  postgres:16
+```
+
+Then:
+```
+export DATABASE_URL="postgresql+psycopg://postgres:postgres@localhost:5432/jeopardy"
+```
