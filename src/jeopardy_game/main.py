@@ -5,7 +5,9 @@ from __future__ import annotations
 
 from fastapi import FastAPI
 
+from jeopardy_game.api.routes import agents
 from jeopardy_game.api.routes.questions import router as questions_router
+
 
 
 def create_app() -> FastAPI:
@@ -16,6 +18,7 @@ def create_app() -> FastAPI:
     )
 
     app.include_router(questions_router)
+    app.include_router(agents.router)
 
     return app
 
