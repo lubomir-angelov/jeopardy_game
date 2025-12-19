@@ -53,6 +53,7 @@ Small FastAPI + PostgreSQL + SQLAlchemy API that:
 - Python 3.13+
 - PostgreSQL 14+ (local or Docker)
 - `pip`
+- make
 
 ## Environment variables
 The API expects a database URL via `DATABASE_URL`.
@@ -62,7 +63,7 @@ Example:
 export DATABASE_URL="postgresql+psycopg://postgres:postgres@localhost:5432/jeopardy"
 ```
 
-## Initial Setup
+## Initial Setup (without Makefile and make)
 
 ```bash
 # 1) Create venv folder if needed
@@ -105,4 +106,30 @@ docker run --rm -d \
 Then:
 ```
 export DATABASE_URL="postgresql+psycopg://postgres:postgres@localhost:5432/jeopardy"
+```
+
+
+# Makefile Usage from repo root
+
+Local venv install:
+
+```bash
+make install
+```
+
+Run API locally (Postgres must be reachable and DATABASE_URL set):
+```bash
+export DATABASE_URL="postgresql+psycopg://jeopardy:jeopardy@localhost:5432/jeopardy"
+make run
+```
+
+Run full Docker stack:
+```bash
+make up
+```
+
+Wipe DB volume and start fresh:
+```bash
+make reset
+make up
 ```
