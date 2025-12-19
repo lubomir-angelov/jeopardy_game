@@ -4,7 +4,7 @@ VENV_DIR := $(HOME)/venvs/jeopardy_game
 PYTHON   := python3.13
 PIP      := $(VENV_DIR)/bin/pip
 
-REQS     := src/jeopardy_game/requirements.txt
+REQS     := requirements.txt
 
 COMPOSE  := docker compose
 
