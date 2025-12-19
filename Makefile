@@ -11,17 +11,18 @@ COMPOSE  := docker compose
 .PHONY: help venv install run up up-d down reset logs ps smoke smoke-up
 
 help:
-	@echo "make venv      - create venv at $(VENV_DIR) (if missing)"
-	@echo "make install   - install Python deps into venv from $(REQS)"
-	@echo "make run       - run API locally (requires DATABASE_URL set)"
-	@echo "make up        - docker compose up --build (attached)"
-	@echo "make up-d      - docker compose up -d --build (detached)"
-	@echo "make down      - docker compose down"
-	@echo "make reset     - docker compose down -v (wipes DB volume)"
-	@echo "make logs      - docker compose logs -f"
-	@echo "make ps        - docker compose ps"
-	@echo "make smoke     - run smoke curls against localhost:8000 (requires API up)"
-	@echo "make smoke-up  - up-d then run smoke"
+	@echo "make venv      	 - create venv at $(VENV_DIR) (if missing)"
+	@echo "make install   	 - install Python deps into venv from $(REQS)"
+	@echo "make run       	 - run API locally (requires DATABASE_URL set)"
+	@echo "make up        	 - docker compose up --build (attached)"
+	@echo "make up-d      	 - docker compose up -d --build (detached)"
+	@echo "make down      	 - docker compose down"
+	@echo "make reset     	 - docker compose down -v (wipes DB volume)"
+	@echo "make logs      	 - docker compose logs -f"
+	@echo "make ps        	 - docker compose ps"
+	@echo "make smoke     	 - run smoke curls against localhost:8000 (requires API up)"
+	@echo "make smoke-up  	 - up-d then run smoke"
+	@echo "make smoke-clean  - teardown smoke test environment and clean DB"
 
 venv:
 	@mkdir -p $(HOME)/venvs
@@ -101,3 +102,9 @@ smoke:
 
 smoke-up: up-d
 	@$(MAKE) smoke
+
+
+.PHONY: smoke-clean
+
+smoke-clean:
+	@$(COMPOSE) down -v
