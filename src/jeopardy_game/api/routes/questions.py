@@ -14,10 +14,7 @@ from jeopardy_game.api.deps import get_db
 from jeopardy_game.models.question import Question
 from jeopardy_game.schemas.question import QuestionOut
 from jeopardy_game.schemas.verify import VerifyAnswerIn, VerifyAnswerOut
-from jeopardy_game.services.answer_checker import is_answer_correct
-
-from jeopardy_game.core.config import get_openai_api_key
-from jeopardy_game.services.llm_verifier import LLMAnswerVerifier
+from jeopardy_game.services.answer_verification import verify_answer_for_question
 
 router = APIRouter(tags=["questions"])
 
@@ -100,32 +97,11 @@ def get_random_question(
     return _to_question_out(q)
 
 
+
 @router.post("/verify-answer/", response_model=VerifyAnswerOut)
 def verify_answer(payload: VerifyAnswerIn, db: Session = Depends(get_db)) -> VerifyAnswerOut:
     q = db.get(Question, payload.question_id)
     if q is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Question not found.")
 
-    # 1) Heuristic baseline (fast)
-    heuristic_ok, heuristic_msg = is_answer_correct(payload.user_answer, q.answer)
-
-    # 2) If heuristic accepts, we can skip LLM cost.
-    if heuristic_ok:
-        return VerifyAnswerOut(is_correct=True, ai_response=heuristic_msg)
-
-    # 3) Otherwise, try LLM if configured.
-    api_key = get_openai_api_key()
-    if not api_key:
-        return VerifyAnswerOut(is_correct=False, ai_response=heuristic_msg)
-
-    try:
-        verifier = LLMAnswerVerifier(api_key=api_key)
-        verdict = verifier.verify(
-            question=q.question,
-            correct_answer=q.answer,
-            user_answer=payload.user_answer,
-        )
-        return VerifyAnswerOut(is_correct=verdict.is_correct, ai_response=verdict.explanation)
-    except Exception:
-        # Fail closed to heuristic result; do not break the API if OpenAI is down.
-        return VerifyAnswerOut(is_correct=False, ai_response=heuristic_msg)
+    return verify_answer_for_question(question=q, user_answer=payload.user_answer)
