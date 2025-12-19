@@ -207,7 +207,7 @@ marimo/_lsp/
 __marimo__/
 
 # project specific ignores
-**/assets
+#**/assets
 **/temp
 **/logs
 **/tmp
