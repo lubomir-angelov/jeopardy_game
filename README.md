@@ -79,6 +79,12 @@ cp .env.example .env
 make up
 ```
 
+## Note to test the agent after up try:
+```bash
+$ curl -s -X POST "http://localhost:8000/agent-play/"   -H "Content-Type: application/json"   -d '{"agent_name":"AI-Bot","skill":"medium","round":"Jeopardy!","value":"$200"}'
+{"agent_name":"AI-Bot","skill":"medium","question_id":182815,"question":"The Haymarket Square Riot came out of a strike against a company that made these farm machines","category":"RATED \"R\"","round":"Jeopardy!","value":"$200","ai_answer":"Reapers","is_correct":true,"verifier_response":"Exact match after normalization: 'reapers'."}
+```
+
 Swagger UI:
 
 * [http://localhost:8000/docs](http://localhost:8000/docs)
