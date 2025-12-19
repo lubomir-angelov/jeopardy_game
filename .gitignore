@@ -212,3 +212,5 @@ __marimo__/
 **/logs
 **/tmp
 **/*.log
+
+.env
