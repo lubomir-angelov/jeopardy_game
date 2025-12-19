@@ -105,6 +105,10 @@ smoke-up: up-d
 
 
 .PHONY: smoke-clean
-
 smoke-clean:
 	@$(COMPOSE) down -v
+
+
+.PHONY: test
+test: install
+	@$(VENV_DIR)/bin/pytest -q
