@@ -53,7 +53,9 @@ Small FastAPI + PostgreSQL + SQLAlchemy API that:
 - Python 3.13+
 - PostgreSQL 14+ (local or Docker)
 - `pip`
-- make
+- make (optional)
+- Docker & docker-compose
+- The JEOPARDY_CSV.csv files is added to the assets/ folder
 
 ## Environment variables
 The API expects a database URL via `DATABASE_URL`.
