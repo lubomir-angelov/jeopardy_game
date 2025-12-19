@@ -7,7 +7,7 @@ import datetime as dt
 from sqlalchemy import Date, Index, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base
+from jeopardy_game.db.base import Base
 
 
 class Question(Base):

@@ -10,11 +10,11 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_db
-from app.models.question import Question
-from app.schemas.question import QuestionOut
-from app.schemas.verify import VerifyAnswerIn, VerifyAnswerOut
-from app.services.answer_checker import is_answer_correct
+from jeopardy_game.api.deps import get_db
+from jeopardy_game.models.question import Question
+from jeopardy_game.schemas.question import QuestionOut
+from jeopardy_game.schemas.verify import VerifyAnswerIn, VerifyAnswerOut
+from jeopardy_game.services.answer_checker import is_answer_correct
 
 router = APIRouter(tags=["questions"])
 
