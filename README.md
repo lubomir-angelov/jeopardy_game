@@ -51,7 +51,7 @@ Small FastAPI + PostgreSQL + SQLAlchemy API that:
 
 ## Requirements
 - Python 3.13+
-- PostgreSQL 14+ (local or Docker)
+- PostgreSQL 16+ (local or Docker)
 - `pip`
 - make (optional)
 - Docker & docker-compose
