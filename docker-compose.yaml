@@ -44,7 +44,7 @@ services:
     depends_on:
       loader:
         condition: service_completed_successfully
-    command: ["uvicorn", "jeopardy_game.app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    command: ["uvicorn", "jeopardy_game.main:app", "--host", "0.0.0.0", "--port", "8000"]
 
 volumes:
   jeopardy_pgdata:

@@ -31,4 +31,4 @@ ENV PYTHONPATH="/home/appuser/app"
 EXPOSE 8000
 
 # Default command for API service; docker-compose can override for the loader service
-CMD ["uvicorn", "jeopardy_game.app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "jeopardy_game.main:app", "--host", "0.0.0.0", "--port", "8000"]

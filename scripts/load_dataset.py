@@ -13,8 +13,8 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import sessionmaker
 
-from jeopardy_game.app.db.base import Base
-from jeopardy_game.app.models.question import Question
+from jeopardy_game.db.base import Base
+from jeopardy_game.models.question import Question
 
 
 _VALUE_RE = re.compile(r"^\s*\$?\s*(\d+)\s*$")
