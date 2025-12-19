@@ -74,7 +74,6 @@ Notes:
 # 1) Run with Make (recommended)
 
 From repo root:
-
 ```bash
 cp .env.example .env
 make up
@@ -85,15 +84,18 @@ Swagger UI:
 * [http://localhost:8000/docs](http://localhost:8000/docs)
 
 Run smoke requests (starts stack detached, waits for API, runs curl checks):
-
 ```bash
 make smoke-up
 ```
 
 Cleanup:
-
 ```bash
 make smoke-clean
+```
+
+Run Tests (currently only unit tests):
+```bash
+make test
 ```
 
 # 2) Run with Docker Compose (no Make)
