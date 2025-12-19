@@ -13,7 +13,7 @@ ENV PATH="/home/appuser/venv/bin:${PATH}"
 WORKDIR /home/appuser/app
 
 # Install dependencies (requirements are inside repo_root/src/jeopardy_game/)
-COPY --chown=10001:10001 src/jeopardy_game/requirements.txt /home/appuser/app/requirements.txt
+COPY --chown=10001:10001 requirements.txt /home/appuser/app/requirements.txt
 
 RUN python -m pip install --upgrade pip setuptools wheel \
     && python -m pip install -r /home/appuser/app/requirements.txt
