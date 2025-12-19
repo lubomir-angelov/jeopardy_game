@@ -6,9 +6,8 @@ from sqlalchemy.orm import Session
 from jeopardy_game.api.deps import get_db
 from jeopardy_game.models.question import Question
 from jeopardy_game.schemas.agent_play import AgentPlayRequest, AgentPlayResponse
-from jeopardy_game.schemas.verify import VerifyAnswerRequest
 from jeopardy_game.services.agents.factory import build_agent
-from jeopardy_game.services.answer_checker import verify_answer  # adjust import to your verifier function
+from jeopardy_game.services.answer_checker import is_answer_correct  # adjust import to your verifier function
 
 
 router = APIRouter(tags=["agents"])
@@ -42,10 +41,9 @@ def agent_play(payload: AgentPlayRequest, db: Session = Depends(get_db)) -> Agen
         value=f"${question_row.value}",
     )
 
-    # Verify using your existing verifier
-    verdict = verify_answer(
-        db=db,
-        req=VerifyAnswerRequest(question_id=question_row.id, user_answer=agent_answer.answer),
+    is_correct, explanation = is_answer_correct(
+        agent_answer.answer,
+        question_row.answer,
     )
 
     return AgentPlayResponse(
@@ -57,6 +55,6 @@ def agent_play(payload: AgentPlayRequest, db: Session = Depends(get_db)) -> Agen
         round=question_row.round,
         value=f"${question_row.value}",
         ai_answer=agent_answer.answer,
-        is_correct=verdict.is_correct,
-        verifier_response=verdict.ai_response,
+        is_correct=is_correct,
+        verifier_response=explanation,
     )

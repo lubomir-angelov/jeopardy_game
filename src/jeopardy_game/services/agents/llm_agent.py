@@ -20,6 +20,7 @@ class LlmAgent(Agent):
         self.name = name
         self._client = client
         self._cfg = config
+        
 
     def _mistake_rate(self) -> float:
         # Higher skill => lower mistake probability
